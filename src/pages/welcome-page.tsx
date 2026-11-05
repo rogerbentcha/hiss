@@ -1,7 +1,7 @@
 import { Link, Navigate } from "react-router"
 
 import { HisseLogo } from "@/components/common/hisse-logo"
-import { OnboardingLayout } from "@/components/layout/onboarding-layout"
+import { OnboardingItem, OnboardingLayout } from "@/components/layout/onboarding-layout"
 import { Button } from "@/components/ui/button"
 import { FeatureList } from "@/features/onboarding/components/feature-list"
 import { useProgram } from "@/hooks/use-program"
@@ -23,7 +23,7 @@ export function WelcomePage() {
         </Button>
       }
     >
-      <div className="flex flex-col items-center gap-3.5 text-center md:gap-4">
+      <OnboardingItem className="flex flex-col items-center gap-3.5 text-center md:gap-4">
         <HisseLogo
           animated
           label="Logo Hisse : un bonhomme saute, attrape la barre et enchaîne trois tractions"
@@ -37,9 +37,11 @@ export function WelcomePage() {
             Ton programme de tractions, de ta première répétition jusqu'à 50.
           </p>
         </div>
-      </div>
+      </OnboardingItem>
 
-      <FeatureList />
+      <OnboardingItem>
+        <FeatureList />
+      </OnboardingItem>
     </OnboardingLayout>
   )
 }

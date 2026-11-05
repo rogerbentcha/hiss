@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react"
 import { Link, useNavigate } from "react-router"
 
 import { ChevronLeftIcon } from "@/components/icons"
-import { OnboardingLayout } from "@/components/layout/onboarding-layout"
+import { OnboardingItem, OnboardingLayout } from "@/components/layout/onboarding-layout"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { LevelMeter } from "@/features/onboarding/components/level-meter"
@@ -41,21 +41,23 @@ export function MaxPage() {
         </div>
       }
     >
-      <div className="flex flex-col gap-2.5 text-center md:gap-2.5">
+      <OnboardingItem className="flex flex-col gap-2.5 text-center md:gap-2.5">
         <h1 className="m-0 font-display text-[22px] leading-[1.15] font-bold tracking-[-0.01em] md:text-2xl">
           Combien de tractions fais-tu&nbsp;?
         </h1>
         <p className="m-0 text-[15px] leading-normal text-muted-foreground md:text-base">
           D'affilée, sans lâcher la barre : bras tendus en bas, menton au-dessus de la barre.
         </p>
-      </div>
+      </OnboardingItem>
 
-      <form id="max-form" onSubmit={submit} className="m-0">
-        <Card className="flex flex-col gap-4 p-4 md:gap-5 md:p-6">
-          <MaxStepper value={max} onChange={setMax} />
-          <LevelMeter max={max} />
-        </Card>
-      </form>
+      <OnboardingItem>
+        <form id="max-form" onSubmit={submit} className="m-0">
+          <Card className="flex flex-col gap-4 p-4 md:gap-5 md:p-6">
+            <MaxStepper value={max} onChange={setMax} />
+            <LevelMeter max={max} />
+          </Card>
+        </form>
+      </OnboardingItem>
     </OnboardingLayout>
   )
 }
