@@ -1,6 +1,8 @@
 import { useEffect } from "react"
 import { Outlet, useLocation } from "react-router"
 
+import { DevResetButton } from "@/components/dev/dev-reset-button"
+
 const TITLES: [RegExp, string][] = [
   [/^\/$/, "Hisse, bienvenue"],
   [/^\/onboarding\/max/, "Hisse, ton max actuel"],
@@ -10,7 +12,7 @@ const TITLES: [RegExp, string][] = [
   [/^\/seance-du-jour/, "Hisse, séance du jour"],
 ]
 
-/** Racine des routes : titre du document et remise en haut de page à chaque navigation. */
+/** Racine des routes : titre du document, remise en haut de page à chaque navigation et outils de dev. */
 export function RootLayout() {
   const { pathname, hash } = useLocation()
 
@@ -19,5 +21,10 @@ export function RootLayout() {
     if (!hash) window.scrollTo(0, 0)
   }, [pathname, hash])
 
-  return <Outlet />
+  return (
+    <>
+      <Outlet />
+      {import.meta.env.DEV && <DevResetButton />}
+    </>
+  )
 }

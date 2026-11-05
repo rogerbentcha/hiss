@@ -2,7 +2,7 @@ import { Link, Navigate } from "react-router"
 
 import { ProgressRing } from "@/components/common/progress-ring"
 import { CheckIcon, ChevronLeftIcon } from "@/components/icons"
-import { OnboardingLayout } from "@/components/layout/onboarding-layout"
+import { OnboardingItem, OnboardingLayout } from "@/components/layout/onboarding-layout"
 import { Button } from "@/components/ui/button"
 import { ConfigSteps, type ConfigStep } from "@/features/onboarding/components/config-steps"
 import { useProgram } from "@/hooks/use-program"
@@ -47,7 +47,7 @@ export function ConfigPage() {
         )
       }
     >
-      <div className="relative size-24">
+      <OnboardingItem className="relative size-24">
         <ProgressRing value={progress / 100} viewBox={168} radius={72} strokeWidth={12} className="size-24" />
         <div className="absolute inset-0 flex items-center justify-center">
           {ready ? (
@@ -56,9 +56,9 @@ export function ConfigPage() {
             <span className="text-lg font-semibold tracking-[-0.02em] tabular-nums md:text-[19px]">{progress}%</span>
           )}
         </div>
-      </div>
+      </OnboardingItem>
 
-      <div className="flex flex-col gap-2 text-center md:gap-2.5">
+      <OnboardingItem className="flex flex-col gap-2 text-center md:gap-2.5">
         <h1
           aria-live="polite"
           className="m-0 font-display text-[22px] leading-[1.15] font-bold tracking-[-0.01em] md:text-2xl"
@@ -70,9 +70,11 @@ export function ConfigPage() {
             ? "6 séances à faire à ton rythme, en respectant les repos. Puis un nouveau test."
             : `On adapte chaque série à ton max de ${program.max} tractions.`}
         </p>
-      </div>
+      </OnboardingItem>
 
-      <ConfigSteps steps={steps} progress={progress} />
+      <OnboardingItem className="w-full">
+        <ConfigSteps steps={steps} progress={progress} />
+      </OnboardingItem>
     </OnboardingLayout>
   )
 }
