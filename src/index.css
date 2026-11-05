@@ -1,0 +1,140 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+@import "@fontsource/nunito/600.css";
+@import "@fontsource/nunito/700.css";
+@import "@fontsource/nunito/800.css";
+
+/*
+ * Hisse — design tokens.
+ * L'interface est uniquement en thème sombre : les variables shadcn
+ * sont directement mappées sur la palette du design.
+ */
+
+@theme inline {
+  --font-sans: "Geist Variable", "Geist", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-heading: "Nunito", "Geist Variable", "Geist", sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Palette étendue du design */
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-subtle: var(--subtle);
+  --color-faint: var(--faint);
+  --color-planned: var(--planned);
+  --color-dot: var(--dot);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-muted: var(--primary-muted);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-card: 28px;
+  --radius-pill: 20px;
+
+}
+
+:root {
+  color-scheme: dark;
+
+  --background: #1c1c1e;
+  --foreground: #f5f5f7;
+  --card: #212123;
+  --card-foreground: #f5f5f7;
+  --popover: #212123;
+  --popover-foreground: #f5f5f7;
+  --primary: #c8f53b;
+  --primary-foreground: #1c1c1e;
+  --primary-hover: #ddfb7a;
+  --primary-muted: #535e31;
+  --secondary: #212123;
+  --secondary-foreground: #f5f5f7;
+  --muted: #3a3a3c;
+  --muted-foreground: #a1a1a6;
+  --accent: #3a3a3c;
+  --accent-foreground: #f5f5f7;
+  --destructive: #ff6961;
+  --border: #3a3a3c;
+  --input: #3a3a3c;
+  --ring: #c8f53b;
+  --radius: 0.625rem;
+
+  --surface: #212123;
+  --surface-2: #3a3a3c;
+  --surface-3: #48484a;
+  --subtle: #d1d1d6;
+  --faint: #8e8e93;
+  --planned: #7c7c80;
+  --dot: #6b6b70;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+  body {
+    @apply m-0 min-h-svh bg-background text-foreground;
+  }
+  a {
+    @apply text-primary;
+  }
+  a:hover {
+    @apply text-primary-hover;
+  }
+  :is(a, button, input):focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  /* Champs numériques sans flèches natives */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+}
+
+@utility font-display {
+  font-family: var(--font-heading);
+}
+
+/* Carte « surface » du design : fond #212123, liseré clair, sans ombre. */
+@utility surface-card {
+  border: 1px solid rgb(255 255 255 / 0.06);
+  background: var(--card);
+  border-radius: var(--radius-card);
+}

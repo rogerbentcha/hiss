@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hisse — logo animé</title>
+<style>
+  :root {
+    --bg: #1c1c1e; --fg: #f5f5f7; --primary: #c8f53b; --primary-muted: #535e31;
+    --surface: #232325; --border: #2a2a2c; --faint: #8e8e93;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--fg);
+    font-family: "Geist Variable", "Geist", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased; }
+  main { min-height: 100vh; display: grid; place-items: center; padding: 32px 20px; }
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 22px; }
+  .hero { width: min(58vmin, 340px); height: auto; display: block; }
+  .reps { display: flex; gap: 10px; height: 10px; }
+  .reps i { width: 10px; height: 10px; border-radius: 50%; background: var(--border);
+    transition: background .2s, transform .35s cubic-bezier(.3, 1.8, .5, 1); }
+  .reps i.on { background: var(--primary); transform: scale(1.25); }
+  .controls { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 12px; width: min(92vw, 440px);
+    font-size: 13px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .controls button { all: unset; cursor: pointer; width: 34px; height: 34px; border-radius: 50%;
+    display: grid; place-items: center; background: var(--surface); color: var(--fg); flex: none; }
+  .controls button:hover { background: var(--border); }
+  .controls button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .controls input[type=range] { flex: 1 1 160px; accent-color: var(--primary); }
+  .controls select { background: var(--surface); color: var(--fg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 4px 6px; font: inherit; }
+  .phase { min-width: 9.5em; text-align: center; color: var(--fg); }
+  .sizes { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 28px; margin-top: 6px; padding-top: 22px;
+    border-top: 1px solid var(--border); }
+  .lockup { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 20px;
+    letter-spacing: -.01em; }
+  .tile { width: 72px; height: 72px; border-radius: 18px; background: var(--bg);
+    border: 1px solid var(--border); display: grid; place-items: center; }
+  .caption { white-space: nowrap; font-size: 12px; color: var(--faint); text-align: center; margin-top: 6px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="stage">
+    <svg class="hero rig" data-hero aria-label="Logo Hisse animé : le bonhomme saute, attrape la barre et enchaîne trois tractions" role="img"></svg>
+    <div class="reps" aria-hidden="true"><i></i><i></i><i></i></div>
+
+    <div class="controls">
+      <button id="play" aria-label="Pause">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="1" width="3.6" height="12" rx="1.2"/><rect x="8.4" y="1" width="3.6" height="12" rx="1.2"/></svg>
+      </button>
+      <input id="scrub" type="range" min="0" max="8" step="0.001" value="0" aria-label="Position dans l'animation" />
+      <select id="speed" aria-label="Vitesse">
+        <option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option>
+      </select>
+      <span class="phase" id="phase">—</span>
+    </div>
+
+    <div class="sizes">
+      <div><div class="tile"><svg class="rig" style="height:56px"></svg></div><div class="caption">App icon</div></div>
+      <div><div class="lockup"><svg class="rig" style="height:40px"></svg>Hisse</div><div class="caption">En-tête</div></div>
+      <div><svg class="rig" style="height:24px"></svg><div class="caption">24 px</div></div>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ==========================================================================
+   Hisse — rig vectoriel animé (style pictogramme SF Symbols « figure »)
+   Tête pleine, membres en capsules à bouts ronds, séparations « knockout »
+   couleur fond entre les parties qui se superposent. Bras et jambes en
+   cinématique inverse à 2 segments ; barre élastique simulée par un ressort.
+   ========================================================================== */
+const NS = "http://www.w3.org/2000/svg";
+const FG = "#C8F53B", BG = "#1C1C1E";
+const D2R = Math.PI / 180;
+
+// ---- Gabarit du personnage (unités du viewBox) ----------------------------
+const GAP = 0.55;                      // épaisseur des séparations
+const TW = 3.6, AW = 2.2, LW = 2.5;    // épaisseurs torse / bras / jambes
+const HR = 2.0;                        // rayon de la tête
+const TL = 5.2;                        // longueur du torse (axe)
+const HEAD_OFF = TW / 2 + 0.5 + HR;    // haut du torse -> centre de la tête
+const ARM_X = 1.7, ARM_DY = 0.3;       // attache des bras dans le torse
+const GOO = 0.45;                       // rayon de lissage des raccords entre membres
+let gooCount = 0;
+const LEG_X = 0.85, FOOT_X = 1.8;      // attache des jambes / écart des pieds
+const UPPER = 4.5, FORE = 4.5, ARM = UPPER + FORE;
+const REACH_UP = 0.955;                 // bras levés : jamais tendus à 100 %, coude toujours un peu fléchi
+const FIST = 1.3;                       // poings posés devant la barre
+const THIGH = 3.4, SHIN = 3.4, LEG = THIGH + SHIN;
+
+// ---- Barre -----------------------------------------------------------------
+const BAR_Y = 3.5, BAR_X0 = 2, BAR_X1 = 22, BAR_W = 1.8, GRIP = 4.4;
+const gt = (12 - GRIP - BAR_X0) / (BAR_X1 - BAR_X0);
+const SAG_AT_GRIP = 4 * gt * (1 - gt);  // flèche de la barre au niveau des mains
+
+// ---- Hauteurs clés (axe des hanches) --------------------------------------
+const LEG_DY = Math.sqrt(LEG * LEG - (FOOT_X - LEG_X) ** 2);
+const ARM_RISE = Math.sqrt((REACH_UP * ARM) ** 2 - (GRIP - ARM_X) ** 2);
+const HANG = BAR_Y + ARM_RISE - ARM_DY + TL;   // suspendu, coudes à peine fléchis
+const TOP = 0.7 + HEAD_OFF + TL;               // menton au-dessus de la barre
+const STAND = HANG + 6.0;                      // debout
+const CROUCH = STAND + 1.5;                    // appel du saut
+const GROUND = STAND + LEG_DY;
+
+// Angles « locaux » des bras : 0° = vers l'extérieur, 90° = vers le bas.
+const polar = (side, wx, wy) => ({ a: Math.atan2(wy, wx * side) / D2R, r: Math.hypot(wx, wy) / ARM });
+const OVER = polar(-1, -(GRIP - ARM_X), -ARM_RISE).a;     // bras levés = prise de barre
+const REST = 62;                                          // bras tendus le long du corps, un peu écartés
+
+// ---- Easing & pistes d'animation ------------------------------------------
+const E = {
+  lin: t => t,
+  in2: t => t * t,                       // chute libre
+  out2: t => 1 - (1 - t) * (1 - t),      // montée balistique
+  io: t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
+  sine: t => -(Math.cos(Math.PI * t) - 1) / 2,
+};
+function track(keys) {
+  return t => {
+    if (t <= keys[0][0]) return keys[0][1];
+    for (let i = 1; i < keys.length; i++) {
+      const [t1, v1, e = "io"] = keys[i];
+      if (t <= t1) {
+        const [t0, v0] = keys[i - 1];
+        const u = t1 > t0 ? (t - t0) / (t1 - t0) : 1;
+        return v0 + (v1 - v0) * E[e](u);
+      }
+    }
+    return keys[keys.length - 1][1];
+  };
+}
+
+const T = 8.0; // durée de la boucle (s)
+const REP_TOPS = [3.35, 4.35, 5.48];
+const CATCH = 2.46, LAND = 6.72;
+
+const tr = {
+  hip: track([
+    [0, STAND], [1.72, STAND], [2.08, CROUCH, "sine"], [CATCH, HANG, "out2"],
+    [2.9, HANG],
+    [3.35, TOP], [3.45, TOP, "lin"], [3.9, HANG, "sine"],
+    [4.35, TOP], [4.45, TOP, "lin"], [4.9, HANG, "sine"],
+    [5.48, TOP], [5.62, TOP, "lin"], [6.12, HANG, "sine"],
+    [6.40, HANG, "lin"], [LAND, STAND, "in2"], [6.88, STAND + 1.2, "out2"], [7.3, STAND], [T, STAND, "lin"],
+  ]),
+  bar: track([[0, 0], [2.43, 0], [2.47, 1, "lin"], [6.38, 1], [6.42, 0, "lin"], [T, 0]]),
+  foot: track([[0, 1], [2.09, 1], [2.14, 0, "lin"], [6.68, 0], [LAND, 1, "lin"], [T, 1]]),
+  tuck: track([
+    [0, 1], [2.08, 1], [2.24, .8, "out2"], [CATCH, .96], [2.75, 1],
+    [2.9, 1], [3.35, .9], [3.45, .9], [3.9, 1], [4.35, .9], [4.45, .9], [4.9, 1],
+    [5.48, .88], [5.62, .88], [6.12, 1], [6.40, 1], [6.55, .9, "out2"], [6.68, 1], [T, 1],
+  ]),
+  spread: track([[0, 1], [2.08, 1], [2.24, 1.25, "out2"], [2.6, 1], [6.40, 1], [6.55, 1.2, "out2"], [6.68, 1], [T, 1]]),
+  angL: track([[0, REST], [0.9, REST], [1.72, OVER], [1.95, -45], [2.30, OVER, "out2"],
+    [6.40, OVER], [6.62, -55, "out2"], [7.2, REST], [T, REST]]),
+  angR: track([[0, REST], [0.95, REST], [1.76, OVER], [1.97, -45], [2.31, OVER, "out2"],
+    [6.40, OVER], [6.62, -55, "out2"], [7.26, REST], [T, REST]]),
+};
+
+// Balancier des jambes après la prise de barre + léger roulis pendant les reps
+function legSwing(t) {
+  if (t < CATCH || t > 6.45) return 0;
+  const u = t - CATCH;
+  return 0.7 * Math.exp(-3 * u) * Math.sin(2 * Math.PI * 1.5 * u)
+       + (t > 2.9 && t < 6.12 ? 0.18 * Math.sin(2 * Math.PI * (t - 2.9) / 1.05) : 0);
+}
+
+function phaseOf(t) {
+  if (t < 0.9) return "Bras le long du corps";
+  if (t < 1.72) return "Lève les bras";
+  if (t < CATCH) return "Saute";
+  if (t < 2.9) return "Attrape la barre";
+  if (t < 3.9) return "Traction 1";
+  if (t < 4.9) return "Traction 2";
+  if (t < 6.12) return "Traction 3";
+  if (t < 6.40) return "Suspendu";
+  if (t < 7.3) return "Redescend";
+  return "Bras le long du corps";
+}
+
+// ---- Cinématique inverse 2 segments ---------------------------------------
+function ik(root, target, l1, l2, pref) {
+  let dx = target.x - root.x, dy = target.y - root.y;
+  let d = Math.hypot(dx, dy);
+  const max = l1 + l2 - 1e-4;
+  if (d < 1e-4) { dx = 0; dy = 1; d = 1e-4; }
+  if (d > max) { dx *= max / d; dy *= max / d; d = max; }
+  const ux = dx / d, uy = dy / d;
+  const a = (l1 * l1 - l2 * l2 + d * d) / (2 * d);
+  const h = Math.sqrt(Math.max(0, l1 * l1 - a * a));
+  let px = -uy, py = ux;
+  if (px * pref.x + py * pref.y < 0) { px = -px; py = -py; }
+  return {
+    mid: { x: root.x + ux * a + px * h, y: root.y + uy * a + py * h },
+    end: { x: root.x + dx, y: root.y + dy },
+  };
+}
+const lerp = (a, b, w) => ({ x: a.x + (b.x - a.x) * w, y: a.y + (b.y - a.y) * w });
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const smooth = v => { v = clamp(v, 0, 1); return v * v * (3 - 2 * v); };
+
+// ---- Barre élastique (ressort sous-amorti, intégré en temps d'animation) ---
+const spring = { x: 0, v: 0 };
+function sagTarget(t) {
+  const h = 0.004;
+  const ay = (tr.hip(t + h) - 2 * tr.hip(t) + tr.hip(Math.max(0, t - h))) / (h * h);
+  return tr.bar(t) * (0.14 + clamp(-ay * 0.0005, -0.1, 0.22));
+}
+function stepSpring(t0, t1) {
+  const H = 1 / 480;
+  for (let t = t0; t < t1; t += H) {
+    const dt = Math.min(H, t1 - t);
+    const acc = -420 * (spring.x - sagTarget(t % T)) - 9 * spring.v;
+    spring.v += acc * dt; spring.x += spring.v * dt;
+  }
+}
+
+// ---- Pose complète à l'instant t ------------------------------------------
+function computePose(t, sag) {
+  const bw = tr.bar(t), fw = tr.foot(t);
+  const gripY = BAR_Y + SAG_AT_GRIP * sag;
+  const hipY = tr.hip(t) + bw * SAG_AT_GRIP * sag;
+  const N = hipY - TL;
+
+  const arms = [-1, 1].map(side => {
+    const root = { x: 12 + side * ARM_X, y: N + ARM_DY };
+    const a = (side < 0 ? tr.angL : tr.angR)(t) * D2R;
+    const r = ARM;
+    const free = { x: root.x + side * Math.cos(a) * r, y: root.y + Math.sin(a) * r };
+    const grip = { x: 12 + side * GRIP, y: gripY };
+    let target = lerp(free, grip, bw);
+    // Flexion minimale : plus le bras monte au-dessus de l'horizontale, plus sa portée est bridée.
+    // (Bras bas = peut se tendre complètement, ce qui permet au coude de changer de côté sans à-coup.)
+    const dx = target.x - root.x, dy = target.y - root.y, d = Math.hypot(dx, dy);
+    const up = smooth((30 - Math.atan2(dy, dx * side) / D2R) / 40);
+    const cap = ARM * (1 - (1 - REACH_UP) * up);
+    if (d > cap) target = { x: root.x + dx / d * cap, y: root.y + dy / d * cap };
+    const k = ik(root, target, UPPER, FORE, { x: side * 0.5, y: 1 });
+    return [root, k.mid, k.end];
+  });
+
+  const swing = legSwing(t), tuck = tr.tuck(t), spread = tr.spread(t);
+  const legs = [-1, 1].map(side => {
+    const root = { x: 12 + side * LEG_X, y: hipY };
+    const air = { x: 12 + side * FOOT_X * spread + swing, y: hipY + LEG_DY * tuck };
+    const ground = { x: 12 + side * FOOT_X, y: GROUND };
+    const k = ik(root, lerp(air, ground, fw), THIGH, SHIN, { x: side, y: 0 });
+    return [root, k.mid, k.end];
+  });
+
+  const alt = clamp((STAND - tr.hip(t)) / (STAND - TOP), 0, 1);
+  return { t, sag, bw, N, hipY, head: { x: 12, y: N - HEAD_OFF }, arms, legs, alt };
+}
+
+// ---- Construction d'une instance SVG ---------------------------------------
+function el(parent, name, attrs) {
+  const e = document.createElementNS(NS, name);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  parent.appendChild(e);
+  return e;
+}
+const pts = p => "M" + p.map(q => q.x.toFixed(3) + " " + q.y.toFixed(3)).join("L");
+
+function buildRig(svg) {
+  svg.setAttribute("viewBox", "-1 -2 26 34.5");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  const fill = w => ({ stroke: FG, "stroke-width": w });
+  const shadow = el(svg, "ellipse", { cx: 12, cy: GROUND + 2.05, ry: 0.55, fill: FG });
+
+  // 1. Silhouette d'un seul bloc : jambes + torse + bras, fusionnés par un filtre « gooey »
+  //    (flou + seuil alpha) qui arrondit tous les raccords : aisselles, hanches, coudes, genoux.
+  const id = "goo" + (++gooCount);
+  const defs = el(svg, "defs", {});
+  const filter = el(defs, "filter", { id, filterUnits: "userSpaceOnUse", x: -6, y: -8, width: 38, height: 46 });
+  el(filter, "feGaussianBlur", { in: "SourceGraphic", stdDeviation: GOO, result: "b" });
+  el(filter, "feColorMatrix", { in: "b", values: "1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 40 -19" });
+  const body = el(svg, "g", { filter: `url(#${id})` });
+  const legF = [el(body, "path", fill(LW)), el(body, "path", fill(LW))];
+  const torsoF = el(body, "path", fill(TW));
+  const armF = [el(body, "path", fill(AW)), el(body, "path", fill(AW))];
+
+  // 2. Tête (détachée du corps)
+  const headK = el(svg, "circle", { r: HR + GAP, fill: BG });
+  const headF = el(svg, "circle", { r: HR, fill: FG });
+
+  // 3. Barre devant le personnage
+  const barK = el(svg, "path", { stroke: BG, "stroke-width": BAR_W + 2 * GAP });
+  const bar = el(svg, "path", fill(BAR_W));
+
+  // 4. Poings refermés devant la barre (visibles seulement quand il tient la barre)
+  const fists = [0, 1].map(() => {
+    const g = el(svg, "g", {});
+    return { g, k: el(g, "circle", { r: FIST + GAP, fill: BG }), f: el(g, "circle", { r: FIST, fill: FG }) };
+  });
+
+  const fx = el(svg, "g", { stroke: FG, "stroke-width": 0.9 });
+  const sparks = Array.from({ length: 10 }, () => el(fx, "line", {}));
+  return { shadow, legF, torsoF, armF, headK, headF, barK, bar, fists, sparks };
+}
+
+function burst(lines, t, t0, dur, origins) {
+  const p = (t - t0) / dur;
+  let i = 0;
+  for (const o of origins) for (const ang of o.angles) {
+    const l = lines[i++];
+    if (p < 0 || p > 1) { l.setAttribute("opacity", 0); continue; }
+    const e = E.out2(p), r0 = o.r + 1.6 * e, r1 = r0 + 0.25 + 1.0 * (1 - p);
+    const c = Math.cos(ang * D2R), s = Math.sin(ang * D2R);
+    l.setAttribute("x1", o.x + c * r0); l.setAttribute("y1", o.y + s * r0);
+    l.setAttribute("x2", o.x + c * r1); l.setAttribute("y2", o.y + s * r1);
+    l.setAttribute("opacity", (1 - p * p).toFixed(3));
+  }
+  return i;
+}
+
+function renderRig(R, P) {
+  R.shadow.setAttribute("rx", (4.2 - 2.2 * P.alt).toFixed(3));
+  R.shadow.setAttribute("opacity", (0.1 - 0.06 * P.alt).toFixed(3));
+  for (let i = 0; i < 2; i++) {
+    R.legF[i].setAttribute("d", pts(P.legs[i]));
+    const [root, elbow, hand] = P.arms[i];
+    R.armF[i].setAttribute("d", pts([root, elbow, hand]));
+    const fist = R.fists[i];
+    fist.g.setAttribute("opacity", P.bw.toFixed(3));
+    for (const c of [fist.k, fist.f]) { c.setAttribute("cx", hand.x.toFixed(3)); c.setAttribute("cy", hand.y.toFixed(3)); }
+  }
+  const torso = `M12 ${P.N.toFixed(3)}L12 ${P.hipY.toFixed(3)}`;
+  R.torsoF.setAttribute("d", torso);
+  for (const c of [R.headK, R.headF]) { c.setAttribute("cx", P.head.x); c.setAttribute("cy", P.head.y.toFixed(3)); }
+  const barD = `M${BAR_X0} ${BAR_Y}Q12 ${(BAR_Y + 2 * P.sag).toFixed(3)} ${BAR_X1} ${BAR_Y}`;
+  R.barK.setAttribute("d", barD); R.bar.setAttribute("d", barD);
+
+  // Effets : éclat à la prise de barre, poussière à l'atterrissage
+  const gy = BAR_Y + SAG_AT_GRIP * P.sag;
+  const n = burst(R.sparks, P.t, CATCH, 0.32, [
+    { x: 12 - GRIP, y: gy, r: 2.1, angles: [-160, -125, -90] },
+    { x: 12 + GRIP, y: gy, r: 2.1, angles: [-20, -55, -90] },
+  ]);
+  burst(R.sparks.slice(n), P.t, LAND, 0.4, [
+    { x: 12 - FOOT_X, y: GROUND + 1.0, r: 1.5, angles: [190, 210] },
+    { x: 12 + FOOT_X, y: GROUND + 1.0, r: 1.5, angles: [-10, -30] },
+  ]);
+}
+
+// ---- Lecture ------------------------------------------------------------------
+const rigs = [...document.querySelectorAll("svg.rig")].map(buildRig);
+const $play = document.getElementById("play"), $scrub = document.getElementById("scrub");
+const $speed = document.getElementById("speed"), $phase = document.getElementById("phase");
+const $dots = [...document.querySelectorAll(".reps i")];
+const PLAY_ICON = $play.innerHTML;
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+let animT = reduced ? 2.9 : 0, playing = !reduced, last = null;
+spring.x = sagTarget(animT % T);
+
+function setPlaying(p) {
+  playing = p;
+  $play.setAttribute("aria-label", p ? "Pause" : "Lecture");
+  $play.innerHTML = p ? PLAY_ICON
+    : '<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3.5 1.8v10.4c0 .8.9 1.3 1.6.9l8.2-5.2c.6-.4.6-1.3 0-1.7L5.1.9c-.7-.4-1.6.1-1.6.9z"/></svg>';
+}
+$play.addEventListener("click", () => { setPlaying(!playing); last = null; });
+$speed.addEventListener("change", () => { last = null; });
+$scrub.addEventListener("input", () => {
+  setPlaying(false);
+  animT = parseFloat($scrub.value);
+  spring.x = sagTarget(animT); spring.v = 0;
+});
+setPlaying(playing);
+
+function frame(now) {
+  if (playing) {
+    if (last != null) {
+      const prev = animT;
+      animT += Math.min(0.05, (now - last) / 1000) * parseFloat($speed.value);
+      stepSpring(prev, animT);
+    }
+    last = now;
+  }
+  const t = animT % T;
+  const P = computePose(t, spring.x);
+  for (const R of rigs) renderRig(R, P);
+  if (playing) $scrub.value = t.toFixed(3);
+  $phase.textContent = phaseOf(t);
+  $dots.forEach((d, i) => d.classList.toggle("on", t >= REP_TOPS[i] && t < 7.6));
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
