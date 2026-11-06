@@ -4,7 +4,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Card, CardTitle } from "@/components/ui/card"
 import { addDays, formatLong, formatMonth, startOfToday, toIso } from "@/lib/dates"
-import { SESSIONS_PER_CYCLE, type Availability } from "@/lib/program"
+import type { Availability } from "@/lib/program"
 import { cn } from "@/lib/utils"
 import type { Program } from "@/types/program"
 
@@ -24,12 +24,12 @@ function buildCells(program: Program, availability: Availability, monthShift: nu
   const month = new Date(today.getFullYear(), today.getMonth() + monthShift, 1)
 
   const marks = new Map<string, { kind: MarkKind; label: string }>()
-  program.done.slice(0, SESSIONS_PER_CYCLE).forEach((d, i) => marks.set(d.date, { kind: "done", label: `S${i + 1}` }))
+  program.done.slice(0, availability.nextIndex).forEach((d, i) => marks.set(d.date, { kind: "done", label: `S${i + 1}` }))
   const nextDay = toIso(availability.resting ? availability.availableFrom : today)
   if (!marks.has(nextDay)) {
     marks.set(nextDay, {
       kind: "plan",
-      label: availability.nextIndex < SESSIONS_PER_CYCLE ? `S${availability.nextIndex + 1}` : "Test",
+      label: availability.cycleDone ? "Test" : `S${availability.nextIndex + 1}`,
     })
   }
 

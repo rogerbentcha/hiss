@@ -2,9 +2,9 @@ import { Link } from "react-router"
 
 import { HisseLogo } from "@/components/common/hisse-logo"
 import { CheckIcon, ChevronRightIcon, LockIcon, PlayCircleIcon } from "@/components/icons"
+import { useExercise } from "@/hooks/use-exercise"
 import { formatTarget } from "@/lib/program"
 import { cn } from "@/lib/utils"
-import { ROUTES } from "@/routes"
 import type { SessionView } from "@/features/sessions/session-view"
 
 interface SessionRowProps {
@@ -14,12 +14,13 @@ interface SessionRowProps {
 
 /** Ligne de la liste des séances : statut, total, séries cibles et date. */
 export function SessionRow({ session, first }: SessionRowProps) {
+  const { routes } = useExercise()
   const isDone = session.status === "done"
   const isNext = session.status === "available" || session.status === "resting"
 
   return (
     <Link
-      to={ROUTES.session(session.number)}
+      to={routes.session(session.number)}
       className={cn(
         "flex items-center gap-2.5 py-3 text-foreground no-underline hover:text-foreground md:gap-6 md:py-3.5",
         !first && "border-t border-surface-2",
@@ -62,7 +63,7 @@ export function SessionRow({ session, first }: SessionRowProps) {
                   isDone ? "text-muted-foreground" : "text-foreground",
                 )}
               >
-                {formatTarget(target, j)}
+                {formatTarget(target, j, session.plan.length)}
               </div>
             ))}
           </div>

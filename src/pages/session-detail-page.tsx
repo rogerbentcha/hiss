@@ -10,29 +10,28 @@ import { StatusBadge } from "@/features/session-detail/components/status-badge"
 import { useProgram } from "@/hooks/use-program"
 import { formatLong, parseIso } from "@/lib/dates"
 import {
-  buildPlan,
+  estimateDuration,
+  formatRest,
   formatRestDays,
   getAvailability,
   getSessionStatus,
-  REST_DAYS,
-  SESSIONS_PER_CYCLE,
   sum,
 } from "@/lib/program"
-import { ROUTES } from "@/routes"
 
-/** Détail d'une séance (1 à 6). */
+/** Détail d'une séance du cycle. */
 export function SessionDetailPage() {
   const { numero } = useParams()
-  const { displayProgram: program, isDemo } = useProgram()
-  const availability = useMemo(() => getAvailability(program), [program])
+  const { displayProgram: program, plan: sessions, exercise, isDemo } = useProgram()
+  const availability = useMemo(() => getAvailability(program, sessions), [program, sessions])
 
   const number = Number(numero)
-  if (!Number.isInteger(number) || number < 1 || number > SESSIONS_PER_CYCLE) {
-    return <Navigate to={ROUTES.sessions} replace />
+  if (!Number.isInteger(number) || number < 1 || number > sessions.length) {
+    return <Navigate to={exercise.routes.sessions} replace />
   }
 
   const index = number - 1
-  const plan = buildPlan(program.max)[index]
+  const session = sessions[index]
+  const plan = session.sets
   const done = program.done[index]
   const reps = done?.reps ?? null
   const status = getSessionStatus(program, index, availability)
@@ -47,8 +46,8 @@ export function SessionDetailPage() {
   return (
     <div className="min-h-svh bg-background text-foreground">
       <header className="mx-auto flex max-w-[880px] items-center justify-between gap-3.5 px-4 py-3.5 md:px-7 md:py-5">
-        <BackLink to={ROUTES.sessions} label="Mes séances" />
-        <SessionPager number={number} />
+        <BackLink to={exercise.routes.sessions} label="Mes séances" />
+        <SessionPager number={number} count={sessions.length} />
       </header>
 
       <main className="mx-auto flex max-w-[880px] flex-col gap-6 px-4 pt-2 pb-8 md:px-7 md:pb-12">
@@ -66,14 +65,14 @@ export function SessionDetailPage() {
           <StatCard
             size="md"
             label={reps ? "Réalisé" : "Total minimum"}
-            value={reps ? `${sum(reps)} / ${sum(plan)}` : `${sum(plan)} tractions`}
+            value={reps ? `${sum(reps)} / ${sum(plan)}` : `${sum(plan)} ${exercise.plural}`}
           />
-          <StatCard size="md" label="Repos entre séries" value="2 min" />
-          <StatCard size="md" label="Durée estimée" value="≈ 11 min" />
-          <StatCard size="md" label="Repos après" value={formatRestDays(REST_DAYS[index])} />
+          <StatCard size="md" label="Repos entre séries" value={formatRest(session.rest)} />
+          <StatCard size="md" label="Durée estimée" value={estimateDuration(session)} />
+          <StatCard size="md" label="Repos après" value={formatRestDays(session.restDaysAfter)} />
         </div>
 
-        <SetPlanList plan={plan} reps={reps} />
+        <SetPlanList plan={plan} rest={session.rest} reps={reps} />
 
         <SessionCta status={status} number={number} availability={availability} isDemo={isDemo} />
       </main>

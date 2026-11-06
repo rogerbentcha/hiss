@@ -1,9 +1,12 @@
 import { CheckIcon, MinusIcon, PlusIcon } from "@/components/icons"
 import { Button } from "@/components/ui/button"
-import { formatTarget, isLastSet, SETS_PER_SESSION } from "@/lib/program"
+import { useExercise } from "@/hooks/use-exercise"
+import { formatTarget, isLastSet } from "@/lib/program"
 
 interface CurrentSetCardProps {
   current: number
+  /** Nombre de séries de la séance. */
+  setCount: number
   target: number
   value: number
   resting: boolean
@@ -16,6 +19,7 @@ interface CurrentSetCardProps {
 /** Carte de la série en cours : cible, compteur de répétitions réalisées et validation. */
 export function CurrentSetCard({
   current,
+  setCount,
   target,
   value,
   resting,
@@ -24,6 +28,8 @@ export function CurrentSetCard({
   onChange,
   onValidate,
 }: CurrentSetCardProps) {
+  const { plural } = useExercise()
+
   return (
     <section
       aria-labelledby="serie-title"
@@ -38,25 +44,25 @@ export function CurrentSetCard({
             Toutes les séries sont faites
           </h2>
           <p className="m-0 text-[13px] text-muted-foreground">
-            {totalReps} tractions aujourd'hui. Termine la séance pour l'enregistrer.
+            {totalReps} {plural} aujourd'hui. Termine la séance pour l'enregistrer.
           </p>
         </div>
       ) : (
         <div className="flex flex-col gap-4 md:gap-5">
           <div className="flex items-baseline justify-between gap-2.5">
             <h2 id="serie-title" className="m-0 font-display text-lg font-semibold">
-              Série {current + 1} sur {SETS_PER_SESSION}
+              Série {current + 1} sur {setCount}
             </h2>
             <span className="text-[13px] text-muted-foreground">
-              {isLastSet(current) ? "Dernière série : au maximum" : "Objectif de la série"}
+              {isLastSet(current, setCount) ? "Dernière série : au maximum" : "Objectif de la série"}
             </span>
           </div>
 
           <div className="flex items-baseline justify-center gap-2.5 md:gap-2.5">
             <span className="font-display text-[72px] leading-none font-bold tracking-[-0.01em] text-primary tabular-nums md:text-8xl">
-              {formatTarget(target, current)}
+              {formatTarget(target, current, setCount)}
             </span>
-            <span className="text-[17px] text-muted-foreground md:text-lg">tractions</span>
+            <span className="text-[17px] text-muted-foreground md:text-lg">{plural}</span>
           </div>
 
           <div className="flex items-center gap-2.5 rounded-[18px] bg-surface-2 p-2.5 md:gap-3.5 md:p-3">

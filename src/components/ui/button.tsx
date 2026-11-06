@@ -9,7 +9,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        /** CTA principal : vert Hisse. */
+        /** CTA principal : couleur primaire de l'exercice. */
         default: "bg-primary font-semibold text-primary-foreground hover:bg-primary-hover hover:text-primary-foreground",
         /** Bouton surface (#212123). */
         secondary: "bg-card font-medium text-foreground hover:bg-surface-2 hover:text-foreground",
@@ -17,8 +17,8 @@ const buttonVariants = cva(
         muted: "bg-surface-2 text-foreground hover:bg-surface-3 hover:text-foreground",
         /** Bouton rond sur fond #3A3A3C (#48484A). */
         raised: "bg-surface-3 text-foreground hover:bg-dot hover:text-foreground",
-        /** Bouton atténué vert (pause / lecture du minuteur). */
-        tonal: "bg-primary-muted text-primary hover:bg-[#606c38] hover:text-primary",
+        /** Bouton atténué primaire (pause / lecture du minuteur). */
+        tonal: "bg-primary-muted text-primary hover:bg-primary-muted-hover hover:text-primary",
         ghost: "bg-transparent text-subtle hover:bg-card hover:text-foreground",
         link: "bg-transparent text-primary underline-offset-4 hover:underline",
       },

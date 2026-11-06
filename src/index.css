@@ -45,6 +45,7 @@
   --color-dot: var(--dot);
   --color-primary-hover: var(--primary-hover);
   --color-primary-muted: var(--primary-muted);
+  --color-primary-muted-hover: var(--primary-muted-hover);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -71,6 +72,7 @@
   --primary-foreground: #1c1c1e;
   --primary-hover: #ddfb7a;
   --primary-muted: #535e31;
+  --primary-muted-hover: #606c38;
   --secondary: #212123;
   --secondary-foreground: #f5f5f7;
   --muted: #3a3a3c;
@@ -90,6 +92,18 @@
   --faint: #8e8e93;
   --planned: #7c7c80;
   --dot: #6b6b70;
+}
+
+/*
+ * Couleur primaire par exercice : le vert Hisse reste celui des tractions,
+ * les pompes passent en bleu ciel. Posé par ExerciseLayout (et les cartes de l'accueil).
+ */
+[data-exercise="pompes"] {
+  --primary: #5ac8fa;
+  --primary-hover: #91dbfc;
+  --primary-muted: #2a5266;
+  --primary-muted-hover: #335f75;
+  --ring: #5ac8fa;
 }
 
 @layer base {

@@ -1,6 +1,7 @@
 import { CloseIcon, PauseFilledIcon, PlayFilledIcon } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { formatClock } from "@/lib/dates"
+import { formatRest } from "@/lib/program"
 
 interface RestTimerProps {
   left: number
@@ -11,15 +12,17 @@ interface RestTimerProps {
   onSkip: () => void
   onMinus15: () => void
   onPlus30: () => void
+  /** Repos prévu entre deux séries, en secondes. */
+  rest: number
 }
 
 /** Minuteur de repos en pilule : lecture/pause, arrêt, temps restant et ajustements. */
-export function RestTimer({ left, running, label, onTogglePause, onSkip, onMinus15, onPlus30 }: RestTimerProps) {
+export function RestTimer({ left, running, label, onTogglePause, onSkip, onMinus15, onPlus30, rest }: RestTimerProps) {
   const pauseLabel = running
     ? "Mettre le repos en pause"
     : left > 0
       ? "Reprendre le repos"
-      : "Lancer 2 minutes de repos"
+      : `Lancer ${formatRest(rest)} de repos`
 
   return (
     <section aria-label="Minuteur de repos" className="flex flex-col items-center gap-2.5 md:gap-3">

@@ -1,23 +1,27 @@
-import { GOAL, getLevel, LEVEL_RANGES } from "@/lib/program"
+import { useExercise } from "@/hooks/use-exercise"
+import { getLevel } from "@/lib/program"
 import { cn } from "@/lib/utils"
 
 interface LevelMeterProps {
   max: number
 }
 
-/** Niveau calculé à partir du max, jauge à 12 segments et distance jusqu'à l'objectif 50. */
+/** Niveau calculé à partir du max, jauge à 12 segments et distance jusqu'à l'objectif final. */
 export function LevelMeter({ max }: LevelMeterProps) {
-  const level = getLevel(max)
-  const goalText = max >= GOAL ? "Objectif 50 atteint. Bravo." : `Encore ${GOAL - max} tractions avant l'objectif 50.`
+  const exercise = useExercise()
+  const { goal } = exercise
+  const level = getLevel(exercise, max)
+  const goalText =
+    max >= goal ? `Objectif ${goal} atteint. Bravo.` : `Encore ${goal - max} ${exercise.plural} avant l'objectif ${goal}.`
 
   return (
     <div className="flex flex-col gap-2.5 border-t border-surface-2 pt-4 md:pt-4">
       <div className="flex items-baseline justify-between gap-2.5">
         <span className="text-[15px] font-semibold">Niveau {level.label}</span>
-        <span className="text-[13px] text-muted-foreground">{level.range} tractions</span>
+        <span className="text-[13px] text-muted-foreground">{level.range} {exercise.plural}</span>
       </div>
       <div aria-hidden="true" className="flex gap-1">
-        {LEVEL_RANGES.map((_, i) => (
+        {exercise.levels.map((_, i) => (
           <div
             key={i}
             className={cn(

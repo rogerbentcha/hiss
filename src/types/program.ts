@@ -1,13 +1,25 @@
 /** Date locale au format ISO `YYYY-MM-DD`. */
 export type IsoDate = string
 
-/** Une séance terminée : les répétitions de chacune des 5 séries. */
+/** Exercices proposés par la plateforme (aussi utilisés comme segment d'URL). */
+export type ExerciseId = "tractions" | "pompes"
+
+/** Plan d'une séance : séries cibles (la dernière est un minimum), repos entre séries et jours de repos après. */
+export interface SessionPlan {
+  sets: number[]
+  /** Repos minimum entre deux séries, en secondes. */
+  rest: number
+  /** Jours de repos minimum avant la séance suivante. */
+  restDaysAfter: number
+}
+
+/** Une séance terminée : les répétitions de chacune des séries. */
 export interface CompletedSession {
   reps: number[]
   date: IsoDate
 }
 
-/** Un cycle d'entraînement : un test de max suivi de 6 séances. */
+/** Un cycle d'entraînement : un test de max suivi des séances du plan (6 pour les tractions, 3 ou 6 pour les pompes). */
 export interface Program {
   max: number
   start: IsoDate
@@ -24,10 +36,10 @@ export interface StoredState {
 
 /** Séance en cours, persistée pour survivre à un rechargement de page. */
 export interface WorkoutProgress {
-  /** Index (0-5) de la séance concernée et date du cycle, pour invalider un brouillon obsolète. */
+  /** Index de la séance concernée et date du cycle, pour invalider un brouillon obsolète. */
   sessionIndex: number
   programStart: IsoDate
-  /** Index de la série en cours (5 = toutes faites). */
+  /** Index de la série en cours (= nombre de séries : toutes faites). */
   current: number
   reps: (number | null)[]
   value: number
@@ -50,6 +62,5 @@ export interface Level {
   max: number
   /** Libellé sur 2 chiffres, ex. « 05 ». */
   label: string
-  /** Fourchette affichée, ex. « 12–15 » ou « 46 et + ». */
-  range: string
+  /** Fourchette affichée, ex. « 12–15 » ou « 46 et + ». */  range: string
 }

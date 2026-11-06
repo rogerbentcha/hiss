@@ -7,22 +7,21 @@ import { Button } from "@/components/ui/button"
 import { ConfigSteps, type ConfigStep } from "@/features/onboarding/components/config-steps"
 import { useProgram } from "@/hooks/use-program"
 import { useProgressAnimation } from "@/hooks/use-progress-animation"
-import { getLevel, SESSIONS_PER_CYCLE, SETS_PER_SESSION } from "@/lib/program"
-import { ROUTES } from "@/routes"
+import { describeRest, describeSetCount, getLevel } from "@/lib/program"
 
 /** Étape 3 — Génération animée du programme. */
 export function ConfigPage() {
-  const { program } = useProgram()
+  const { program, exercise, plan } = useProgram()
   const progress = useProgressAnimation()
 
-  if (!program) return <Navigate to={ROUTES.max} replace />
+  if (!program) return <Navigate to={exercise.routes.max} replace />
 
   const ready = progress >= 100
   const steps: ConfigStep[] = [
-    { at: 25, label: "Calcul de ton niveau", detail: `Niveau ${getLevel(program.max).label}` },
-    { at: 50, label: "Répartition des séries", detail: `${SESSIONS_PER_CYCLE} × ${SETS_PER_SESSION} séries` },
-    { at: 75, label: "Planification des repos", detail: "2 min / série" },
-    { at: 100, label: "Préparation du suivi", detail: `${SESSIONS_PER_CYCLE} séances` },
+    { at: 25, label: "Calcul de ton niveau", detail: `Niveau ${getLevel(exercise, program.max).label}` },
+    { at: 50, label: "Répartition des séries", detail: `${plan.length} séances, ${describeSetCount(plan)} séries` },
+    { at: 75, label: "Planification des repos", detail: `${describeRest(plan)} / série` },
+    { at: 100, label: "Préparation du suivi", detail: `${plan.length} séances` },
   ]
 
   return (
@@ -35,13 +34,13 @@ export function ConfigPage() {
         ready && (
           <div className="flex w-full gap-2.5 md:gap-2.5">
             <Button asChild variant="secondary" className="flex-none gap-1.5 pr-4 pl-3 md:pr-5 md:pl-4">
-              <Link to={ROUTES.max}>
+              <Link to={exercise.routes.max}>
                 <ChevronLeftIcon size={20} />
                 Retour
               </Link>
             </Button>
             <Button asChild className="flex-auto">
-              <Link to={ROUTES.sessions}>Voir mes séances</Link>
+              <Link to={exercise.routes.sessions}>Voir mes séances</Link>
             </Button>
           </div>
         )
@@ -67,8 +66,8 @@ export function ConfigPage() {
         </h1>
         <p className="m-0 text-[15px] leading-normal text-muted-foreground md:text-base">
           {ready
-            ? "6 séances à faire à ton rythme, en respectant les repos. Puis un nouveau test."
-            : `On adapte chaque série à ton max de ${program.max} tractions.`}
+            ? `${plan.length} séances à faire à ton rythme, en respectant les repos. Puis un nouveau test.`
+            : `On adapte chaque série à ton max de ${program.max} ${exercise.plural}.`}
         </p>
       </OnboardingItem>
 
