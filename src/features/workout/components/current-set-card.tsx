@@ -65,12 +65,12 @@ export function CurrentSetCard({
             <span className="text-[17px] text-muted-foreground md:text-lg">{plural}</span>
           </div>
 
-          <div className="flex items-center gap-2.5 rounded-[18px] bg-surface-2 p-2.5 md:gap-3.5 md:p-3">
+          <div className="flex items-center gap-2.5 rounded-full bg-surface-2 p-2.5 md:gap-3.5 md:p-3">
             <Button
               variant="raised"
               size="icon"
               aria-label="Une répétition de moins"
-              className="size-[42px]"
+              className="size-[42px] before:absolute before:-inset-px"
               onClick={() => onChange(value - 1)}
             >
               <MinusIcon size={20} strokeWidth={2.2} />
@@ -85,7 +85,7 @@ export function CurrentSetCard({
               variant="raised"
               size="icon"
               aria-label="Une répétition de plus"
-              className="size-[42px]"
+              className="size-[42px] before:absolute before:-inset-px"
               onClick={() => onChange(value + 1)}
             >
               <PlusIcon size={20} strokeWidth={2.2} />

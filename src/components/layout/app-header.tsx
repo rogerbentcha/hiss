@@ -16,7 +16,7 @@ export function AppHeader() {
         <Link
           to={HOME}
           aria-label={`Programme ${exercise.name.toLowerCase()} : changer d'exercice`}
-          className="rounded-full bg-primary-muted px-2.5 py-1 text-xs font-semibold text-primary no-underline hover:bg-primary-muted-hover hover:text-primary"
+          className="relative rounded-full bg-primary-muted px-2.5 py-1 before:absolute before:inset-x-0 before:-inset-y-2.5 text-xs font-semibold text-primary no-underline hover:bg-primary-muted-hover hover:text-primary"
         >
           {exercise.name}
         </Link>

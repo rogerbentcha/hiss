@@ -44,7 +44,7 @@ export function RepsChart({ sessions, defaultIndex }: RepsChartProps) {
         </div>
       </CardHeader>
 
-      <p aria-live="polite" className="m-0 min-h-5 text-[13px] text-foreground">
+      <p aria-live="polite" className="m-0 min-h-5 text-[13px] text-foreground tabular-nums">
         {readout}
       </p>
 

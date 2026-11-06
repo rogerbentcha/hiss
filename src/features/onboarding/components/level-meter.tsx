@@ -17,8 +17,8 @@ export function LevelMeter({ max }: LevelMeterProps) {
   return (
     <div className="flex flex-col gap-2.5 border-t border-surface-2 pt-4 md:pt-4">
       <div className="flex items-baseline justify-between gap-2.5">
-        <span className="text-[15px] font-semibold">Niveau {level.label}</span>
-        <span className="text-[13px] text-muted-foreground">{level.range} {exercise.plural}</span>
+        <span className="text-[15px] font-semibold tabular-nums">Niveau {level.label}</span>
+        <span className="text-[13px] text-muted-foreground tabular-nums">{level.range} {exercise.plural}</span>
       </div>
       <div aria-hidden="true" className="flex gap-1">
         {exercise.levels.map((_, i) => (
@@ -31,7 +31,7 @@ export function LevelMeter({ max }: LevelMeterProps) {
           />
         ))}
       </div>
-      <p aria-live="polite" className="m-0 text-[13px] text-muted-foreground">
+      <p aria-live="polite" className="m-0 text-[13px] text-muted-foreground tabular-nums">
         {goalText}
       </p>
     </div>

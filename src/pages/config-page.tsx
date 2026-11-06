@@ -1,5 +1,6 @@
 import { Link, Navigate } from "react-router"
 
+import { IconSwap } from "@/components/common/icon-swap"
 import { ProgressRing } from "@/components/common/progress-ring"
 import { CheckIcon, ChevronLeftIcon } from "@/components/icons"
 import { OnboardingItem, OnboardingLayout } from "@/components/layout/onboarding-layout"
@@ -48,13 +49,13 @@ export function ConfigPage() {
     >
       <OnboardingItem className="relative size-24">
         <ProgressRing value={progress / 100} viewBox={168} radius={72} strokeWidth={12} className="size-24" />
-        <div className="absolute inset-0 flex items-center justify-center">
+        <IconSwap swapKey={ready ? "done" : "progress"} className="absolute inset-0">
           {ready ? (
             <CheckIcon strokeWidth={2.4} className="size-8 text-primary" role="img" aria-label="Terminé" aria-hidden={false} />
           ) : (
             <span className="text-lg font-semibold tracking-[-0.02em] tabular-nums md:text-[19px]">{progress}%</span>
           )}
-        </div>
+        </IconSwap>
       </OnboardingItem>
 
       <OnboardingItem className="flex flex-col gap-2 text-center md:gap-2.5">
