@@ -2,7 +2,9 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { MotionConfig, motion, type HTMLMotionProps, type Transition, type Variants } from "motion/react"
 
 import { Logo } from "@/components/layout/logo"
+import { useExercise } from "@/hooks/use-exercise"
 import { cn } from "@/lib/utils"
+import { HOME } from "@/routes"
 
 interface OnboardingLayoutProps {
   step: 1 | 2 | 3
@@ -97,6 +99,7 @@ export function OnboardingLayout({
   mainClassName,
   footerClassName = "max-w-[560px]",
 }: OnboardingLayoutProps) {
+  const exercise = useExercise()
   const direction = useStepDirection(step)
   const firstLoad = direction === 0
 
@@ -109,7 +112,7 @@ export function OnboardingLayout({
           transition={spring(0.45)}
           className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-2.5 px-4 py-3.5 md:gap-3.5 md:px-7 md:py-5"
         >
-          <Logo to={logoLink ? "/" : undefined} />
+          <Logo to={logoLink ? HOME : undefined} />
           <motion.span
             key={step}
             initial={firstLoad ? false : { opacity: 0, y: direction * 6 }}
@@ -117,7 +120,7 @@ export function OnboardingLayout({
             transition={spring(0.35)}
             className="text-[13px] text-muted-foreground"
           >
-            Étape {step} sur 3
+            {exercise.name} · Étape {step} sur 3
           </motion.span>
         </motion.header>
         <ItemVariantsContext.Provider value={itemVariants(direction)}>

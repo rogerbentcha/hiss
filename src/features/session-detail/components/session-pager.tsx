@@ -2,18 +2,20 @@ import { useNavigate } from "react-router"
 
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons"
 import { Button } from "@/components/ui/button"
-import { SESSIONS_PER_CYCLE } from "@/lib/program"
-import { ROUTES } from "@/routes"
+import { useExercise } from "@/hooks/use-exercise"
 
 interface SessionPagerProps {
-  /** Numéro de séance (1-6). */
+  /** Numéro de séance (à partir de 1). */
   number: number
+  /** Nombre de séances du cycle. */
+  count: number
 }
 
-/** Navigation précédente / suivante entre les 6 séances. */
-export function SessionPager({ number }: SessionPagerProps) {
+/** Navigation précédente / suivante entre les séances du cycle. */
+export function SessionPager({ number, count }: SessionPagerProps) {
   const navigate = useNavigate()
-  const go = (n: number) => navigate(ROUTES.session(n), { replace: true })
+  const { routes } = useExercise()
+  const go = (n: number) => navigate(routes.session(n), { replace: true })
 
   return (
     <div className="flex items-center gap-2">
@@ -28,13 +30,13 @@ export function SessionPager({ number }: SessionPagerProps) {
         <ChevronLeftIcon size={18} strokeWidth={2.2} />
       </Button>
       <span className="min-w-12 text-center text-[13px] text-muted-foreground tabular-nums">
-        {number} / {SESSIONS_PER_CYCLE}
+        {number} / {count}
       </span>
       <Button
         variant="secondary"
         size="icon-md"
         aria-label="Séance suivante"
-        disabled={number >= SESSIONS_PER_CYCLE}
+        disabled={number >= count}
         className="disabled:opacity-40"
         onClick={() => go(number + 1)}
       >

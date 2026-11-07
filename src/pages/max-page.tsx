@@ -8,19 +8,17 @@ import { Card } from "@/components/ui/card"
 import { LevelMeter } from "@/features/onboarding/components/level-meter"
 import { MaxStepper } from "@/features/onboarding/components/max-stepper"
 import { useProgram } from "@/hooks/use-program"
-import { DEFAULT_MAX } from "@/lib/program"
-import { ROUTES } from "@/routes"
 
 /** Étape 2 — Saisie du max (aussi utilisée pour « Refaire le test »). */
 export function MaxPage() {
-  const { program, startCycle } = useProgram()
+  const { program, exercise, startCycle } = useProgram()
   const navigate = useNavigate()
-  const [max, setMax] = useState(program?.max ?? DEFAULT_MAX)
+  const [max, setMax] = useState(program?.max ?? exercise.defaultMax)
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
     startCycle(max)
-    navigate(ROUTES.config)
+    navigate(exercise.routes.config)
   }
 
   return (
@@ -30,7 +28,7 @@ export function MaxPage() {
       footer={
         <div className="flex gap-2.5 md:gap-2.5">
           <Button asChild variant="secondary" className="flex-none gap-1.5 pr-4 pl-3 md:pr-5 md:pl-4">
-            <Link to={ROUTES.welcome}>
+            <Link to={program ? exercise.routes.sessions : exercise.routes.welcome}>
               <ChevronLeftIcon size={20} />
               Retour
             </Link>
@@ -43,10 +41,10 @@ export function MaxPage() {
     >
       <OnboardingItem className="flex flex-col gap-2.5 text-center md:gap-2.5">
         <h1 className="m-0 font-display text-[22px] leading-[1.15] font-bold tracking-[-0.01em] md:text-2xl">
-          Combien de tractions fais-tu&nbsp;?
+          {exercise.copy.testQuestion}
         </h1>
         <p className="m-0 text-[15px] leading-normal text-muted-foreground md:text-base">
-          D'affilée, sans lâcher la barre : bras tendus en bas, menton au-dessus de la barre.
+          D'affilée, sans t'arrêter. {exercise.copy.form}
         </p>
       </OnboardingItem>
 

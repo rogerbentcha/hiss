@@ -2,7 +2,8 @@ import { useId } from "react"
 
 import { MinusIcon, PlusIcon } from "@/components/icons"
 import { Button } from "@/components/ui/button"
-import { clampReps, MAX_REPS } from "@/lib/program"
+import { useExercise } from "@/hooks/use-exercise"
+import { clampReps } from "@/lib/program"
 
 interface MaxStepperProps {
   value: number
@@ -12,6 +13,8 @@ interface MaxStepperProps {
 /** Saisie du max : grand champ numérique encadré des boutons − / +. */
 export function MaxStepper({ value, onChange }: MaxStepperProps) {
   const id = useId()
+  const { singular, maxReps } = useExercise()
+  const clamp = (v: number) => clampReps(v, maxReps)
 
   return (
     <>
@@ -23,9 +26,9 @@ export function MaxStepper({ value, onChange }: MaxStepperProps) {
           type="button"
           variant="muted"
           size="icon"
-          aria-label="Une traction de moins"
+          aria-label={`Une ${singular} de moins`}
           className="size-[46px] md:size-12"
-          onClick={() => onChange(clampReps(value - 1))}
+          onClick={() => onChange(clamp(value - 1))}
         >
           <MinusIcon size={22} strokeWidth={2.2} />
         </Button>
@@ -34,18 +37,18 @@ export function MaxStepper({ value, onChange }: MaxStepperProps) {
           type="number"
           inputMode="numeric"
           min={0}
-          max={MAX_REPS}
+          max={maxReps}
           value={value}
-          onChange={(e) => onChange(clampReps(parseInt(e.target.value, 10)))}
+          onChange={(e) => onChange(clamp(parseInt(e.target.value, 10)))}
           onFocus={(e) => e.target.select()}
           className="m-0 w-full min-w-0 flex-auto border-0 bg-transparent p-0 text-center font-display text-[56px] leading-none font-bold tracking-[-0.01em] text-foreground tabular-nums md:text-[64px]"
         />
         <Button
           type="button"
           size="icon"
-          aria-label="Une traction de plus"
+          aria-label={`Une ${singular} de plus`}
           className="size-[46px] md:size-12"
-          onClick={() => onChange(clampReps(value + 1))}
+          onClick={() => onChange(clamp(value + 1))}
         >
           <PlusIcon size={22} strokeWidth={2.2} />
         </Button>

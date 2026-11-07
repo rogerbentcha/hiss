@@ -2,8 +2,8 @@ import { Link } from "react-router"
 
 import { LockIcon, PlayFilledIcon } from "@/components/icons"
 import { Button } from "@/components/ui/button"
+import { useExercise } from "@/hooks/use-exercise"
 import type { Availability } from "@/lib/program"
-import { ROUTES } from "@/routes"
 import type { SessionStatus } from "@/types/program"
 
 interface SessionCtaProps {
@@ -16,11 +16,13 @@ interface SessionCtaProps {
 
 /** Bas de page du détail : lancer la séance, ou rappel qu'elle est verrouillée. */
 export function SessionCta({ status, number, availability, isDemo }: SessionCtaProps) {
+  const { routes } = useExercise()
+
   if (status === "available" || status === "resting") {
     return (
       <div className="flex flex-col items-start gap-2.5">
         <Button asChild size="lg" className="max-[600px]:self-stretch">
-          <Link to={isDemo ? ROUTES.welcome : ROUTES.workout}>
+          <Link to={isDemo ? routes.welcome : routes.workout}>
             <PlayFilledIcon size={20} />
             Commencer la séance
           </Link>

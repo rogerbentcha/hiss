@@ -1,5 +1,6 @@
 import { Card, CardTitle } from "@/components/ui/card"
-import { GOAL, getCycleGoal } from "@/lib/program"
+import { useExercise } from "@/hooks/use-exercise"
+import { getCycleGoal } from "@/lib/program"
 import { cn } from "@/lib/utils"
 
 interface GoalProgressProps {
@@ -16,14 +17,18 @@ function LegendRow({ swatch, label, value }: { swatch: string; label: string; va
   )
 }
 
-/** Carte « Vers 50 tractions » : max actuel, objectif du cycle et reste à faire. */
+/** Carte « Vers 50 tractions » (ou 100 pompes) : max actuel, objectif du cycle et reste à faire. */
 export function GoalProgress({ max }: GoalProgressProps) {
-  const goal = getCycleGoal(max)
-  const pct = (v: number) => `${Math.min(100, (v / GOAL) * 100)}%`
+  const exercise = useExercise()
+  const target = exercise.goal
+  const goal = getCycleGoal(exercise, max)
+  const pct = (v: number) => `${Math.min(100, (v / target) * 100)}%`
 
   return (
     <Card className="flex min-w-0 flex-[1_1_370px] flex-col gap-4 p-4 md:p-5">
-      <CardTitle>Vers 50 tractions</CardTitle>
+      <CardTitle>
+        Vers {target} {exercise.plural}
+      </CardTitle>
       <div className="flex flex-col gap-2.5">
         <div className="relative h-3 rounded-md bg-surface-2">
           <div className="absolute inset-y-0 left-0 rounded-md bg-primary" style={{ width: pct(max) }} />
@@ -35,14 +40,14 @@ export function GoalProgress({ max }: GoalProgressProps) {
         </div>
         <div className="flex justify-between text-xs text-muted-foreground tabular-nums">
           <span>0</span>
-          <span>25</span>
-          <span>50</span>
+          <span>{target / 2}</span>
+          <span>{target}</span>
         </div>
       </div>
       <div className="flex flex-col gap-3">
         <LegendRow swatch="h-3 rounded-full bg-primary" label="Max actuel" value={max} />
         <LegendRow swatch="h-[3px] rounded-[2px] bg-foreground" label="Objectif du cycle" value={goal} />
-        <LegendRow swatch="h-3 rounded-full bg-surface-2" label="Reste jusqu'à 50" value={Math.max(0, GOAL - max)} />
+        <LegendRow swatch="h-3 rounded-full bg-surface-2" label={`Reste jusqu'à ${target}`} value={Math.max(0, target - max)} />
       </div>
     </Card>
   )

@@ -2,7 +2,7 @@ import { Link } from "react-router"
 
 import { HisseLogo } from "@/components/common/hisse-logo"
 import { Button } from "@/components/ui/button"
-import { ROUTES } from "@/routes"
+import { HOME } from "@/routes"
 
 export function NotFoundPage() {
   return (
@@ -13,7 +13,7 @@ export function NotFoundPage() {
         <p className="m-0 text-[15px] text-muted-foreground md:text-base">Cette page n'existe pas ou plus.</p>
       </div>
       <Button asChild>
-        <Link to={ROUTES.sessions}>Retour à mes séances</Link>
+        <Link to={HOME}>Retour à l'accueil</Link>
       </Button>
     </main>
   )

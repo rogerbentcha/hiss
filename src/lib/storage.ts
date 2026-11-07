@@ -3,11 +3,6 @@
  * Les mises à jour sont propagées aux composants abonnés et aux autres onglets.
  */
 
-export const STORAGE_KEYS = {
-  state: "hisse:state",
-  workout: "hisse:workout",
-} as const
-
 type Listener = () => void
 
 export interface LocalStore<T> {

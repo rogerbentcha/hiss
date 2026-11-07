@@ -1,24 +1,27 @@
 import { RotateCcw } from "lucide-react"
 import { useNavigate } from "react-router"
 
-import { STORAGE_KEYS } from "@/lib/storage"
-import { EMPTY_STATE, programStore, workoutStore } from "@/lib/stores"
-import { ROUTES } from "@/routes"
+import { EXERCISES } from "@/lib/exercises"
+import { EMPTY_STATE, getStores } from "@/lib/stores"
+import { HOME } from "@/routes"
 
 /**
- * Outil de développement : efface les données stockées (programme, historique, séance en cours)
- * et revient à l'accueil. Rendu uniquement en dev (`import.meta.env.DEV`).
+ * Outil de développement : efface les données stockées de tous les exercices (programme, historique,
+ * séance en cours) et revient à l'accueil. Rendu uniquement en dev (`import.meta.env.DEV`).
  */
 export function DevResetButton() {
   const navigate = useNavigate()
 
   const reset = () => {
     // Via les stores, pour que les composants abonnés se mettent à jour sans recharger.
-    programStore.set(EMPTY_STATE)
-    workoutStore.set(null)
-    // Puis on supprime vraiment les clés : les stores retombent sur les mêmes valeurs par défaut.
-    Object.values(STORAGE_KEYS).forEach((key) => window.localStorage.removeItem(key))
-    navigate(ROUTES.welcome, { replace: true })
+    EXERCISES.forEach((e) => {
+      const stores = getStores(e.id)
+      stores.program.set(EMPTY_STATE)
+      stores.workout.set(null)
+      // Puis on supprime vraiment les clés : les stores retombent sur les mêmes valeurs par défaut.
+      Object.values(e.storageKeys).forEach((key) => window.localStorage.removeItem(key))
+    })
+    navigate(HOME, { replace: true })
   }
 
   return (
