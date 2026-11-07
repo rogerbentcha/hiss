@@ -1,4 +1,5 @@
 import { SetDot } from "@/components/common/set-dot"
+import { useExercise } from "@/hooks/use-exercise"
 import { formatTarget } from "@/lib/program"
 import { cn } from "@/lib/utils"
 
@@ -8,8 +9,9 @@ interface DayProgramProps {
   current: number
 }
 
-/** « Programme du jour » : les 5 séries avec leur état (faite, en cours, à venir). */
+/** « Programme du jour » : les séries avec leur état (faite, en cours, à venir). */
 export function DayProgram({ plan, reps, current }: DayProgramProps) {
+  const { plural } = useExercise()
   return (
     <section
       aria-labelledby="prog-title"
@@ -34,7 +36,7 @@ export function DayProgram({ plan, reps, current }: DayProgramProps) {
                 {i + 1}
               </SetDot>
               <span className={cn("flex-auto text-sm", done ? "text-muted-foreground" : "text-foreground")}>
-                {formatTarget(target, i)} tractions
+                {formatTarget(target, i, plan.length)} {plural}
               </span>
               <span className={cn("text-[13px] font-medium", done ? "text-primary" : "text-foreground")}>
                 {done ? `${reps[i]} faites` : isCurrent ? "En cours" : ""}

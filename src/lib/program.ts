@@ -1,85 +1,92 @@
-import { addDays, formatLong, formatShort, isSameDay, parseIso, startOfToday, toIso } from "@/lib/dates"
-import type { Level, Program, SessionStatus } from "@/types/program"
-
-/* ------------------------------------------------------------------ */
-/* Constantes du programme                                            */
-/* ------------------------------------------------------------------ */
-
-export const GOAL = 50
-export const SESSIONS_PER_CYCLE = 6
-export const SETS_PER_SESSION = 5
-export const REST_BETWEEN_SETS = 120 // secondes
-export const MAX_REPS = 99
-export const DEFAULT_MAX = 8
-
-/** Jours de repos après chaque séance (1, 2, 4, 5 → 1 jour ; 3, 6 → 2 jours). */
-export const REST_DAYS = [1, 1, 2, 1, 1, 2] as const
-
-/** Fourchettes de max pour chacun des 12 niveaux. */
-export const LEVEL_RANGES: readonly (readonly [number, number])[] = [
-  [0, 3],
-  [4, 5],
-  [6, 8],
-  [9, 11],
-  [12, 15],
-  [16, 20],
-  [21, 25],
-  [26, 30],
-  [31, 35],
-  [36, 40],
-  [41, 45],
-  [46, 50],
-]
+import { addDays, formatLong, formatShort, isSameDay, parseIso, startOfToday } from "@/lib/dates"
+import type { Exercise } from "@/lib/exercises"
+import type { Level, Program, SessionPlan, SessionStatus } from "@/types/program"
 
 /* ------------------------------------------------------------------ */
 /* Niveaux & plan                                                     */
 /* ------------------------------------------------------------------ */
 
-export function clampReps(value: number): number {
+export function clampReps(value: number, maxReps: number): number {
   if (Number.isNaN(value)) return 0
-  return Math.max(0, Math.min(MAX_REPS, Math.round(value)))
+  return Math.max(0, Math.min(maxReps, Math.round(value)))
 }
 
-export function getLevel(max: number): Level {
-  let index = LEVEL_RANGES.findIndex(([min, top]) => max >= min && max <= top)
-  if (index < 0) index = LEVEL_RANGES.length - 1
-  const [min, top] = LEVEL_RANGES[index]
-  const isLast = index === LEVEL_RANGES.length - 1
+export function getLevel(exercise: Exercise, max: number): Level {
+  const { levels } = exercise
+  let index = levels.findIndex(([min, top]) => max >= min && max <= top)
+  if (index < 0) index = levels.length - 1
+  const [min, top] = levels[index]
+  const isLast = index === levels.length - 1
   return {
     index,
     min,
     max: top,
     label: String(index + 1).padStart(2, "0"),
-    range: isLast ? "46 et +" : `${min}–${top}`,
+    range: isLast ? `${min} et +` : `${min}–${top}`,
   }
 }
 
-/** Objectif de max à atteindre au prochain test. */
-export function getCycleGoal(max: number): number {
-  const level = getLevel(max)
-  return level.index === LEVEL_RANGES.length - 1 ? GOAL : level.max + 1
-}
-
-/** Séries cibles des 6 séances d'un cycle, calculées à partir du max. */
-export function buildPlan(max: number): number[][] {
-  const pct = (p: number) => Math.max(1, Math.round(max * p))
-  return Array.from({ length: SESSIONS_PER_CYCLE }, (_, k) => {
-    const core = pct(0.45 + 0.04 * k)
-    return [pct(0.45 + 0.05 * k), pct(0.6 + 0.05 * k), core, core, pct(0.6 + 0.04 * k)]
-  })
+/** Objectif de max à atteindre au prochain test : le niveau suivant, puis l'objectif final. */
+export function getCycleGoal(exercise: Exercise, max: number): number {
+  const level = getLevel(exercise, max)
+  return level.index === exercise.levels.length - 1 ? exercise.goal : level.max + 1
 }
 
 export const sum = (values: (number | null)[]) => values.reduce<number>((acc, v) => acc + (v ?? 0), 0)
 
-export const isLastSet = (setIndex: number) => setIndex === SETS_PER_SESSION - 1
+export const isLastSet = (setIndex: number, setCount: number) => setIndex === setCount - 1
 
 /** La dernière série s'affiche avec un « + » : c'est un minimum. */
-export function formatTarget(target: number, setIndex: number): string {
-  return isLastSet(setIndex) ? `${target}+` : String(target)
+export function formatTarget(target: number, setIndex: number, setCount: number): string {
+  return isLastSet(setIndex, setCount) ? `${target}+` : String(target)
 }
 
 export function formatRestDays(days: number): string {
   return `${days} ${days > 1 ? "jours" : "jour"}`
+}
+
+/** 120 → « 2 min », 90 → « 1 min 30 », 45 → « 45 s ». */
+export function formatRest(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  if (!m) return `${s} s`
+  return s ? `${m} min ${String(s).padStart(2, "0")}` : `${m} min`
+}
+
+/** Valeur unique, ou fourchette « a à b » si elle varie. */
+function spread(values: number[], format: (v: number) => string): string {
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  return min === max ? format(min) : `${format(min)} à ${format(max)}`
+}
+
+/** « 2 min » ou « 1 min à 2 min » selon que le repos varie d'une séance à l'autre. */
+export const describeRest = (plan: SessionPlan[]) => spread(plan.map((s) => s.rest), formatRest)
+
+/** « 5 » ou « 5 à 9 » séries par séance. */
+export const describeSetCount = (plan: SessionPlan[]) => spread(plan.map((s) => s.sets.length), String)
+
+export const restVaries = (plan: SessionPlan[]) => new Set(plan.map((s) => s.rest)).size > 1
+
+/** « 1, 2, 4 et 5 » */
+function joinFr(items: (string | number)[]): string {
+  return items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} et ${items[items.length - 1]}`
+}
+
+/** « 1 jour après les séances 1, 2, 4 et 5. 2 jours après les séances 3 et 6. » */
+export function describeRecovery(plan: SessionPlan[]): string {
+  const byDays = new Map<number, number[]>()
+  plan.forEach((s, i) => byDays.set(s.restDaysAfter, [...(byDays.get(s.restDaysAfter) ?? []), i + 1]))
+  return [...byDays.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([days, sessions]) => `${formatRestDays(days)} après ${sessions.length > 1 ? "les séances" : "la séance"} ${joinFr(sessions)}.`)
+    .join(" ")
+}
+
+/** Durée estimée d'une séance : les repos plus ~40 s par série. */
+export function estimateDuration(session: SessionPlan): string {
+  const n = session.sets.length
+  return `≈ ${Math.round(((n - 1) * session.rest + n * 40) / 60)} min`
 }
 
 /* ------------------------------------------------------------------ */
@@ -87,8 +94,10 @@ export function formatRestDays(days: number): string {
 /* ------------------------------------------------------------------ */
 
 export interface Availability {
-  /** Index de la prochaine séance à faire (6 = cycle terminé, place au test). */
+  /** Index de la prochaine séance à faire (= nombre de séances : cycle terminé, place au test). */
   nextIndex: number
+  /** Vrai quand toutes les séances du cycle sont faites. */
+  cycleDone: boolean
   /** Date à partir de laquelle la prochaine séance est possible. */
   availableFrom: Date
   /** Vrai si le repos n'est pas encore terminé. */
@@ -103,12 +112,12 @@ export interface Availability {
  * Pas de dates fixes : une séance reçoit sa date quand elle est faite.
  * La suivante devient disponible une fois le repos après la précédente terminé.
  */
-export function getAvailability(program: Program, today: Date = startOfToday()): Availability {
-  const done = program.done.slice(0, SESSIONS_PER_CYCLE)
+export function getAvailability(program: Program, plan: SessionPlan[], today: Date = startOfToday()): Availability {
+  const done = program.done.slice(0, plan.length)
   let availableFrom = new Date(today)
   if (done.length) {
     const last = done[done.length - 1]
-    availableFrom = addDays(parseIso(last.date), REST_DAYS[done.length - 1] + 1)
+    availableFrom = addDays(parseIso(last.date), plan[done.length - 1].restDaysAfter + 1)
   }
   const resting = availableFrom > today
   const tomorrow = addDays(today, 1)
@@ -121,6 +130,7 @@ export function getAvailability(program: Program, today: Date = startOfToday()):
 
   return {
     nextIndex: done.length,
+    cycleDone: done.length >= plan.length,
     availableFrom,
     resting,
     text: label(formatShort),
@@ -128,7 +138,7 @@ export function getAvailability(program: Program, today: Date = startOfToday()):
   }
 }
 
-export function getSessionStatus(program: Program, index: number, availability = getAvailability(program)): SessionStatus {
+export function getSessionStatus(program: Program, index: number, availability: Availability): SessionStatus {
   if (index < program.done.length) return "done"
   if (index === availability.nextIndex) return availability.resting ? "resting" : "available"
   return "locked"
@@ -139,22 +149,4 @@ export const STATUS_LABELS: Record<SessionStatus, string> = {
   available: "Disponible",
   resting: "En repos",
   locked: "À venir",
-}
-
-/* ------------------------------------------------------------------ */
-/* Programme d'exemple                                                */
-/* ------------------------------------------------------------------ */
-
-/** Programme de démonstration affiché tant que l'onboarding n'a pas été fait. */
-export function createDemoProgram(today: Date = startOfToday()): Program {
-  const first = toIso(addDays(today, -4))
-  const second = toIso(addDays(today, -2))
-  return {
-    max: 13,
-    start: first,
-    done: [
-      { reps: [6, 8, 6, 6, 10], date: first },
-      { reps: [7, 8, 6, 6, 9], date: second },
-    ],
-  }
 }

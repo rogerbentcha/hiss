@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react"
 
-import { buildPlan, clampReps, REST_BETWEEN_SETS, SESSIONS_PER_CYCLE, SETS_PER_SESSION } from "@/lib/program"
-import { workoutStore } from "@/lib/stores"
+import { useExercise } from "@/hooks/use-exercise"
+import { clampReps } from "@/lib/program"
+import { getStores } from "@/lib/stores"
 import type { Program, RestTimerState, WorkoutProgress } from "@/types/program"
 
 const IDLE_TIMER: RestTimerState = { left: 0, endsAt: null }
@@ -17,7 +18,7 @@ function freshProgress(program: Program, sessionIndex: number, plan: number[]): 
     sessionIndex,
     programStart: program.start,
     current: 0,
-    reps: Array.from({ length: SETS_PER_SESSION }, () => null),
+    reps: Array.from({ length: plan.length }, () => null),
     value: plan[0],
     timer: IDLE_TIMER,
   }
@@ -28,8 +29,11 @@ function freshProgress(program: Program, sessionIndex: number, plan: number[]): 
  * minuteur de repos. Tout est persisté dans le localStorage.
  */
 export function useWorkout(program: Program) {
-  const sessionIndex = Math.min(program.done.length, SESSIONS_PER_CYCLE - 1)
-  const plan = useMemo(() => buildPlan(program.max)[sessionIndex], [program.max, sessionIndex])
+  const exercise = useExercise()
+  const workoutStore = getStores(exercise.id).workout
+  const sessions = useMemo(() => exercise.buildPlan(program.max), [exercise, program.max])
+  const sessionIndex = Math.min(program.done.length, sessions.length - 1)
+  const { sets: plan, rest } = sessions[sessionIndex]
 
   const stored = useSyncExternalStore(workoutStore.subscribe, workoutStore.get)
   const progress = useMemo(
@@ -49,7 +53,7 @@ export function useWorkout(program: Program) {
           : freshProgress(program, sessionIndex, plan)
       workoutStore.set({ ...current, ...patch(current) })
     },
-    [program, sessionIndex, plan],
+    [workoutStore, program, sessionIndex, plan],
   )
 
   /* --- Minuteur ---------------------------------------------------- */
@@ -78,7 +82,7 @@ export function useWorkout(program: Program) {
     update((p) => {
       const t = Date.now()
       const rem = remainingSeconds(p.timer, t)
-      if (rem <= 0) return { timer: startTimer(REST_BETWEEN_SETS) }
+      if (rem <= 0) return { timer: startTimer(rest) }
       return { timer: p.timer.endsAt !== null ? { left: rem, endsAt: null } : { left: rem, endsAt: t + rem * 1000 } }
     })
 
@@ -94,10 +98,10 @@ export function useWorkout(program: Program) {
 
   /* --- Séries ------------------------------------------------------ */
 
-  const allDone = progress.current >= SETS_PER_SESSION
+  const allDone = progress.current >= plan.length
   const resting = left > 0
 
-  const setValue = (value: number) => update(() => ({ value: clampReps(value) }))
+  const setValue = (value: number) => update(() => ({ value: clampReps(value, exercise.maxReps) }))
 
   const validateSet = () => {
     if (allDone || resting) return
@@ -105,8 +109,8 @@ export function useWorkout(program: Program) {
       const reps = [...p.reps]
       reps[p.current] = p.value
       const next = p.current + 1
-      if (next >= SETS_PER_SESSION) return { reps, current: next }
-      return { reps, current: next, value: plan[next], timer: startTimer(REST_BETWEEN_SETS) }
+      if (next >= plan.length) return { reps, current: next }
+      return { reps, current: next, value: plan[next], timer: startTimer(rest) }
     })
   }
 
@@ -117,6 +121,7 @@ export function useWorkout(program: Program) {
   return {
     sessionIndex,
     plan,
+    rest,
     current: progress.current,
     reps: progress.reps,
     value: progress.value,

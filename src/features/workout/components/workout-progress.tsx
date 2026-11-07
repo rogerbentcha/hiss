@@ -1,3 +1,4 @@
+import { useExercise } from "@/hooks/use-exercise"
 import { cn } from "@/lib/utils"
 
 interface WorkoutProgressProps {
@@ -10,6 +11,7 @@ interface WorkoutProgressProps {
 
 /** Titre de la séance, compteur de séries et barre segmentée de progression. */
 export function WorkoutProgress({ sessionNumber, doneSets, totalReps, reps, current }: WorkoutProgressProps) {
+  const { plural } = useExercise()
   return (
     <div className="flex flex-col gap-3 md:gap-3.5">
       <div className="flex items-end justify-between gap-2.5 md:flex-wrap">
@@ -17,7 +19,7 @@ export function WorkoutProgress({ sessionNumber, doneSets, totalReps, reps, curr
           Séance {sessionNumber}
         </h1>
         <span className="text-[13px] text-subtle tabular-nums">
-          {doneSets} / {reps.length} séries&nbsp; {totalReps} tractions
+          {doneSets} / {reps.length} séries&nbsp; {totalReps} {plural}
         </span>
       </div>
       <div aria-hidden="true" className="flex gap-1.5">

@@ -1,6 +1,7 @@
 import { useState } from "react"
 
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
+import { useExercise } from "@/hooks/use-exercise"
 import { cn } from "@/lib/utils"
 import type { SessionView } from "@/features/sessions/session-view"
 
@@ -21,28 +22,29 @@ function LegendSwatch({ className, label }: { className: string; label: string }
   )
 }
 
-/** Histogramme « Tractions par séance » : réalisé (vert) vs prévu (gris), interactif au survol. */
+/** Histogramme « Tractions par séance » : réalisé (couleur primaire) vs prévu (gris), interactif au survol. */
 export function RepsChart({ sessions, defaultIndex }: RepsChartProps) {
+  const { name, plural } = useExercise()
   const [hover, setHover] = useState<number | null>(null)
   const active = hover ?? Math.min(defaultIndex, sessions.length - 1)
 
   const top = Math.ceil((Math.max(...sessions.map((s) => s.total)) * 1.15) / 10) * 10
   const current = sessions[active]
   const readout = current.reps
-    ? `Séance ${current.number} : ${current.total} tractions réalisées, ${current.plannedTotal} prévues`
-    : `Séance ${current.number} : ${current.plannedTotal} tractions prévues au minimum`
+    ? `Séance ${current.number} : ${current.total} ${plural} réalisées, ${current.plannedTotal} prévues`
+    : `Séance ${current.number} : ${current.plannedTotal} ${plural} prévues au minimum`
 
   return (
     <Card className="flex min-w-0 flex-[999_1_610px] flex-col gap-4 p-4 md:p-5">
       <CardHeader>
-        <CardTitle>Tractions par séance</CardTitle>
+        <CardTitle>{name} par séance</CardTitle>
         <div className="flex gap-3.5 text-xs text-subtle">
           <LegendSwatch className="bg-primary" label="Réalisé" />
           <LegendSwatch className="bg-planned" label="Prévu" />
         </div>
       </CardHeader>
 
-      <p aria-live="polite" className="m-0 min-h-5 text-[13px] text-foreground">
+      <p aria-live="polite" className="m-0 min-h-5 text-[13px] text-foreground tabular-nums">
         {readout}
       </p>
 
@@ -69,7 +71,7 @@ export function RepsChart({ sessions, defaultIndex }: RepsChartProps) {
                   <button
                     key={s.index}
                     type="button"
-                    aria-label={`Séance ${s.number} : ${s.total} tractions ${done ? "réalisées" : "prévues"}`}
+                    aria-label={`Séance ${s.number} : ${s.total} ${plural} ${done ? "réalisées" : "prévues"}`}
                     onMouseEnter={() => setHover(s.index)}
                     onFocus={() => setHover(s.index)}
                     onClick={() => setHover(s.index)}

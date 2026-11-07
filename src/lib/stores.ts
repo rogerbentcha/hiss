@@ -1,5 +1,6 @@
-import { createLocalStore, STORAGE_KEYS } from "@/lib/storage"
-import type { CompletedSession, Program, StoredState, WorkoutProgress } from "@/types/program"
+import { EXERCISES } from "@/lib/exercises"
+import { createLocalStore, type LocalStore } from "@/lib/storage"
+import type { CompletedSession, ExerciseId, Program, StoredState, WorkoutProgress } from "@/types/program"
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null
 
@@ -30,12 +31,26 @@ const isWorkoutProgress = (v: unknown): v is WorkoutProgress =>
 
 export const EMPTY_STATE: StoredState = { program: null, history: [] }
 
-/** Programme et historique des cycles. */
-export const programStore = createLocalStore<StoredState>(STORAGE_KEYS.state, EMPTY_STATE, isStoredState)
+export interface ExerciseStores {
+  /** Programme et historique des cycles. */
+  program: LocalStore<StoredState>
+  /** Séance en cours (brouillon). */
+  workout: LocalStore<WorkoutProgress | null>
+}
 
-/** Séance en cours (brouillon). */
-export const workoutStore = createLocalStore<WorkoutProgress | null>(
-  STORAGE_KEYS.workout,
-  null,
-  (v): v is WorkoutProgress | null => v === null || isWorkoutProgress(v),
-)
+/** Chaque exercice a ses propres données : on peut suivre les deux programmes en parallèle. */
+const STORES = Object.fromEntries(
+  EXERCISES.map((e) => [
+    e.id,
+    {
+      program: createLocalStore<StoredState>(e.storageKeys.state, EMPTY_STATE, isStoredState),
+      workout: createLocalStore<WorkoutProgress | null>(
+        e.storageKeys.workout,
+        null,
+        (v): v is WorkoutProgress | null => v === null || isWorkoutProgress(v),
+      ),
+    },
+  ]),
+) as Record<ExerciseId, ExerciseStores>
+
+export const getStores = (id: ExerciseId): ExerciseStores => STORES[id]

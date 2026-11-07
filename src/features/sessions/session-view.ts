@@ -1,6 +1,7 @@
 import { capitalize, formatShort, parseIso } from "@/lib/dates"
-import { buildPlan, getAvailability, getSessionStatus, sum, type Availability } from "@/lib/program"
-import type { Program, SessionStatus } from "@/types/program"
+import type { Exercise } from "@/lib/exercises"
+import { getSessionStatus, sum, type Availability } from "@/lib/program"
+import type { Program, SessionPlan, SessionStatus } from "@/types/program"
 
 /** Modèle d'affichage d'une séance dans la liste « Les séances ». */
 export interface SessionView {
@@ -16,8 +17,13 @@ export interface SessionView {
   sub: string | null
 }
 
-export function buildSessionViews(program: Program, availability: Availability = getAvailability(program)): SessionView[] {
-  return buildPlan(program.max).map((plan, index) => {
+export function buildSessionViews(
+  exercise: Exercise,
+  program: Program,
+  sessions: SessionPlan[],
+  availability: Availability,
+): SessionView[] {
+  return sessions.map(({ sets: plan }, index) => {
     const status = getSessionStatus(program, index, availability)
     const done = program.done[index]
     const plannedTotal = sum(plan)
@@ -35,7 +41,7 @@ export function buildSessionViews(program: Program, availability: Availability =
       reps: done ? done.reps : null,
       total: done ? sum(done.reps) : plannedTotal,
       plannedTotal,
-      headline: done ? `${sum(done.reps)} tractions` : `${plannedTotal} tractions minimum`,
+      headline: done ? `${sum(done.reps)} ${exercise.plural}` : `${plannedTotal} ${exercise.plural} minimum`,
       sub,
     }
   })

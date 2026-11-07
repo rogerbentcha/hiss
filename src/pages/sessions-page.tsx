@@ -14,9 +14,12 @@ import { getAvailability } from "@/lib/program"
 
 /** Tableau de bord « Mes séances ». */
 export function SessionsPage() {
-  const { displayProgram: program, isDemo } = useProgram()
-  const availability = useMemo(() => getAvailability(program), [program])
-  const sessions = useMemo(() => buildSessionViews(program, availability), [program, availability])
+  const { displayProgram: program, plan, exercise, isDemo } = useProgram()
+  const availability = useMemo(() => getAvailability(program, plan), [program, plan])
+  const sessions = useMemo(
+    () => buildSessionViews(exercise, program, plan, availability),
+    [exercise, program, plan, availability],
+  )
 
   return (
     <div className="min-h-svh bg-background text-foreground">
@@ -28,18 +31,18 @@ export function SessionsPage() {
           <h2 id="suivi-title" className="m-0 font-display text-xl font-bold tracking-[-0.01em]">
             Suivis
           </h2>
-          <StatsGrid program={program} />
+          <StatsGrid program={program} sessionCount={plan.length} />
           <div className="flex flex-wrap items-start gap-2.5">
             <RepsChart sessions={sessions} defaultIndex={availability.nextIndex} />
             <GoalProgress max={program.max} />
           </div>
         </section>
 
-        <SessionList sessions={sessions} />
+        <SessionList sessions={sessions} plan={plan} />
 
         <section className="flex flex-wrap items-start gap-2.5">
           <TrackingCalendar program={program} availability={availability} />
-          <RulesCard />
+          <RulesCard plan={plan} />
         </section>
       </main>
     </div>
